@@ -1,9 +1,14 @@
+import os
+
 from flask import Flask, render_template, request
 import requests
 
 app = Flask(__name__)
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434/api/generate"
+)
 MODEL = "gemma4:e2b"
 
 
