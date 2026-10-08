@@ -14,7 +14,13 @@ body {
 
     color: #ffffff;
 }
-
+.error-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #3a1f1f;
+    color: #ff8a8a;
+}
 
 /* NAVBAR */
 

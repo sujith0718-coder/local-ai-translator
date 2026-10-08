@@ -9,18 +9,27 @@ OLLAMA_URL = os.getenv(
     "OLLAMA_URL",
     "http://localhost:11434/api/generate"
 )
+
 MODEL = "gemma4:e2b"
 
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     translation = ""
+    error = ""
 
     if request.method == "POST":
-        text = request.form["text"]
-        language = request.form["language"]
+        text = request.form.get("text", "").strip()
+        language = request.form.get("language", "").strip()
 
-        prompt = f"""
+        if not text:
+            error = "Please enter some text."
+
+        elif not language:
+            error = "Please select a target language."
+
+        else:
+            prompt = f"""
 Translate the following text into {language}.
 Give only the translation. Do not explain anything.
 
@@ -28,22 +37,43 @@ Text:
 {text}
 """
 
-        data = {
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False
-        }
+            data = {
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            }
 
-        response = requests.post(OLLAMA_URL, json=data)
-        result = response.json()
+            try:
+                response = requests.post(
+                    OLLAMA_URL,
+                    json=data,
+                    timeout=120
+                )
 
-        translation = result["response"]
+                response.raise_for_status()
+
+                result = response.json()
+                translation = result.get("response", "").strip()
+
+                if not translation:
+                    error = "The AI returned an empty response."
+
+            except requests.exceptions.RequestException as e:
+                error = f"AI connection error: {e}"
+
+            except Exception as e:
+                error = f"Unexpected error: {e}"
 
     return render_template(
         "index.html",
-        translation=translation
+        translation=translation,
+        error=error
     )
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 5000)),
+        debug=False
+    )
